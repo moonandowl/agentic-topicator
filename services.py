@@ -130,6 +130,7 @@ Original audience: {original_audience}
             timeout=90.0,
             model_overrides=_model_overrides(settings),
         )
+        content = f"# {selection.topic}\n\n{content}"
         return Brief(selection=selection, content=content, error=None)
     except Exception as e:
         return Brief(selection=selection, content="", error=str(e))
