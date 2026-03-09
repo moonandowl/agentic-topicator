@@ -2,12 +2,13 @@
 
 ## System Overview
 
-This system generates article topic ideas for client content. A user inputs a topic and audience. All 26 sub-agents run in parallel, each producing a list of article-worthy angles through its specific psychological or behavioral lens. The user reviews all outputs, selects a single idea from any agent, and passes it to the Brief Builder agent, which produces a complete article brief for a writer.
+This system generates article topic ideas for client content. A user inputs a topic and audience. All 26 sub-agents run in parallel, each producing a list of article-worthy angles through its specific psychological or behavioral lens. The user reviews all outputs, selects one or more ideas from any agent, and passes them to the pipeline: the SEO Title Agent runs first (one per selection), producing search-optimized H1 titles; then the Brief Builder produces a complete article brief for each selection. Each brief includes both the topic H1 and the SEO title H1.
 
 ## Architecture
 
 - **Layer 1: Sub-Agents (26 agents, run in parallel)** — Each agent receives the same topic + audience input and returns a list of article angle suggestions through its unique lens.
-- **Layer 2: Brief Builder (1 agent, runs on demand)** — Receives the user's chosen article idea and produces a full article brief including justification, outline, guideline bullets under each heading, and a customized CTA.
+- **Layer 2: SEO Title Agent (runs on demand, once per selected topic)** — Runs before the Brief Builder. Receives each selected suggestion and produces an H1-ready SEO/AEO-optimized title for search and AI overviews. Output is inserted as a second H1 below the topic in the final brief.
+- **Layer 3: Brief Builder (runs on demand, once per selection)** — Receives the user's chosen article idea plus the SEO title from the prior step and produces a full article brief including justification, outline, guideline bullets under each heading, and a customized CTA.
 
 ## Expected Sub-Agent Output Format
 
@@ -109,13 +110,23 @@ Each agent produces 3 suggestions. The Sub-Agent Name is repeated on every sugge
 
 ---
 
-## Brief Builder Agent
+## SEO Title Agent
 
-**Trigger:** Runs after the user selects one or more article ideas from the sub-agent outputs and clicks "Generate Briefs."
-
-**Execution:** One Brief Builder call fires per selected suggestion. All calls run in parallel. Each call is independent.
+**Trigger:** Runs automatically when the user selects one or more article ideas and clicks "Generate Briefs." One SEO Title Agent call fires per selected suggestion, in parallel, before any Brief Builder calls.
 
 **Input per call:** The selected suggestion (Sub-Agent Name, Topic, and Justification), the original topic, and the original audience.
+
+**Output:** A single title string (no prefix). Used as the second H1 in each article brief.
+
+**Criteria (condensed):** Remove emotional/editorial flair; use concrete, searchable language. Lead with the primary keyword. Target featured snippets and AEO (questions, definitive answers). Preserve emotional hook without sacrificing clarity. Avoid clickbait; signal genuine informational value. Keep length SERP-safe (55–60 chars). Weave secondary keywords naturally.
+
+---
+
+## Brief Builder Agent
+
+**Trigger:** Runs after the SEO Title Agent completes for each selection. One Brief Builder call fires per selected suggestion. All calls run in parallel. Each call is independent.
+
+**Input per call:** The selected suggestion (Sub-Agent Name, Topic, and Justification), the SEO title from the prior step, the original topic, and the original audience.
 
 **Output per call:** A complete article brief containing:
 - **Justification** — Why this article matters and why it will resonate with the audience

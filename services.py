@@ -3,7 +3,7 @@
 import asyncio
 from typing import Literal
 
-from agents import BRIEF_BUILDER_SYSTEM, SUB_AGENT_FORMAT, SUB_AGENTS
+from agents import BRIEF_BUILDER_SYSTEM, SEO_TITLE_AGENT_SYSTEM, SUB_AGENT_FORMAT, SUB_AGENTS
 from llm import completions
 from models import AgentResult, Brief, Suggestion
 from parsers import parse_suggestions
@@ -107,10 +107,43 @@ async def generate_topics(
     return out
 
 
+async def _run_seo_title_agent(
+    selection: Suggestion,
+    original_topic: str,
+    original_audience: str,
+    provider: Provider,
+    api_keys: dict[str, str],
+    settings,
+) -> str:
+    """Generate an SEO/AEO-optimized title for the selection."""
+    user = f"""Selected suggestion:
+Sub-Agent: {selection.sub_agent_name}
+Topic: {selection.topic}
+Justification: {selection.justification}
+
+Original topic: {original_topic}
+Original audience: {original_audience}
+"""
+    try:
+        text = await completions(
+            provider,
+            SEO_TITLE_AGENT_SYSTEM,
+            user,
+            api_keys,
+            timeout=30.0,
+            model_overrides=_model_overrides(settings),
+        )
+        title = text.strip().split("\n")[0].strip()
+        return title if title else selection.topic
+    except Exception:
+        return selection.topic
+
+
 async def _run_brief_builder(
     selection: Suggestion,
     original_topic: str,
     original_audience: str,
+    seo_title: str,
     provider: Provider,
     api_keys: dict[str, str],
     settings,
@@ -119,6 +152,8 @@ async def _run_brief_builder(
 Sub-Agent: {selection.sub_agent_name}
 Topic: {selection.topic}
 Justification: {selection.justification}
+
+SEO/AEO title: {seo_title}
 
 Original topic: {original_topic}
 Original audience: {original_audience}
@@ -132,7 +167,7 @@ Original audience: {original_audience}
             timeout=90.0,
             model_overrides=_model_overrides(settings),
         )
-        content = f"# {selection.topic}\n\n{content}"
+        content = f"# {selection.topic}\n\n# {seo_title}\n\n{content}"
         return Brief(selection=selection, content=content, error=None)
     except Exception as e:
         return Brief(selection=selection, content="", error=str(e))
@@ -145,12 +180,29 @@ async def generate_briefs(
     provider: Provider,
     settings,
 ) -> list[Brief]:
-    """Run Brief Builder once per selection in parallel."""
+    """Run SEO Title Agent first, then Brief Builder once per selection in parallel."""
     api_keys = _api_keys(settings, provider)
+
+    # Step 1: Run SEO Title Agent for all selections in parallel
+    seo_title_tasks = [
+        _run_seo_title_agent(s, original_topic, original_audience, provider, api_keys, settings)
+        for s in selections
+    ]
+    seo_titles = await asyncio.gather(*seo_title_tasks, return_exceptions=True)
+
+    # Step 2: Use fallback for any SEO agent failures
+    resolved_seo_titles = []
+    for i, result in enumerate(seo_titles):
+        if isinstance(result, Exception):
+            resolved_seo_titles.append(selections[i].topic)
+        else:
+            resolved_seo_titles.append(result)
+
+    # Step 3: Run Brief Builder for each (selection, seo_title)
     tasks = [
         _run_brief_builder(
-            s, original_topic, original_audience, provider, api_keys, settings
+            s, original_topic, original_audience, seo_title, provider, api_keys, settings
         )
-        for s in selections
+        for s, seo_title in zip(selections, resolved_seo_titles)
     ]
     return await asyncio.gather(*tasks, return_exceptions=False)
