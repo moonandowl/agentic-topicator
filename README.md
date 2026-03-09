@@ -27,11 +27,11 @@ uvicorn main:app --reload
 ## Supported Models
 
 - **Anthropic:** claude-opus-4-6
-- **OpenAI:** gpt-5.4-pro
-- **Google:** gemini-3.1-pro-preview
+- **OpenAI:** gpt-4o (override with `OPENAI_MODEL` for gpt-5.4-pro, etc.)
+- **Google:** gemini-2.0-flash (override with `GOOGLE_MODEL` for gemini-3.1-pro-preview, etc.)
 - **Perplexity:** sonar-pro
 
-Select per run from the UI. Override via env vars (e.g. `OPENAI_MODEL`) if needed.
+Select per run from the UI. Override via env vars if needed.
 
 ## Deploy
 
@@ -58,8 +58,8 @@ Select per run from the UI. Override via env vars (e.g. `OPENAI_MODEL`) if neede
 | `OPENAI_API_KEY` | One of four | For gpt-5.4-pro |
 | `GOOGLE_API_KEY` | One of four | For gemini-3.1-pro-preview |
 | `PERPLEXITY_API_KEY` | One of four | For sonar-pro |
-| `OPENAI_MODEL` | Optional | Default: `gpt-5.4-pro` |
-| `GOOGLE_MODEL` | Optional | Default: `gemini-3.1-pro-preview` |
+| `OPENAI_MODEL` | Optional | Default: `gpt-4o` |
+| `GOOGLE_MODEL` | Optional | Default: `gemini-2.0-flash` |
 | `ANTHROPIC_MODEL` | Optional | Default: `claude-opus-4-6` |
 | `PERPLEXITY_MODEL` | Optional | Default: `sonar-pro` |
 | `AUTH_USERNAME` | Optional | When set with `AUTH_PASSWORD`, enables HTTP Basic Auth |

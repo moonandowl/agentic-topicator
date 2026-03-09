@@ -22,8 +22,8 @@ class Settings:
         self.auth_username = os.getenv("AUTH_USERNAME", "")
         self.auth_password = os.getenv("AUTH_PASSWORD", "")
         # Model IDs (override via env if needed)
-        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-5.4-pro")
-        self.google_model = os.getenv("GOOGLE_MODEL", "gemini-3.1-pro-preview")
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o")
+        self.google_model = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
         self.anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-opus-4-6")
         self.perplexity_model = os.getenv("PERPLEXITY_MODEL", "sonar-pro")
 

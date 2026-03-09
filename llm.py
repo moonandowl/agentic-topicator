@@ -72,7 +72,7 @@ async def _openai(
 
     client = AsyncOpenAI(api_key=api_keys.get("openai", ""))
     response = await client.chat.completions.create(
-        model=model or "gpt-5.4-pro",
+        model=model or "gpt-4o",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
@@ -90,15 +90,37 @@ async def _google(
     model: str | None = None,
 ) -> str:
     from google import genai
+    from google.genai import types
 
     client = genai.Client(api_key=api_keys.get("google", ""))
     async with client.aio as aclient:
         response = await aclient.models.generate_content(
-            model=model or "gemini-3.1-pro-preview",
-            contents=f"{system_prompt}\n\n---\n\n{user_message}",
-            config={"temperature": 0.7, "max_output_tokens": 2048},
+            model=model or "gemini-2.0-flash",
+            contents=user_message,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.7,
+                max_output_tokens=2048,
+            ),
         )
     return response.text or ""
+
+
+def _inject_perplexity_citations(content: str, citations: list[str]) -> str:
+    """Replace [1], [2], etc. with actual URLs from Perplexity citations array."""
+    if not citations:
+        return content
+    import re
+    pattern = re.compile(r"\[(\d+)\]")
+
+    def replace_match(m):
+        n = int(m.group(1))
+        idx = n - 1
+        if 0 <= idx < len(citations):
+            return f" ({citations[idx]})"
+        return m.group(0)
+
+    return pattern.sub(replace_match, content)
 
 
 async def _perplexity(
@@ -108,18 +130,35 @@ async def _perplexity(
     timeout: float,
     model: str | None = None,
 ) -> str:
-    from openai import AsyncOpenAI
+    import httpx
 
-    client = AsyncOpenAI(
-        api_key=api_keys.get("perplexity", ""),
-        base_url="https://api.perplexity.ai",
-    )
-    response = await client.chat.completions.create(
-        model=model or "sonar-pro",
-        messages=[
+    api_key = api_keys.get("perplexity", "")
+    payload = {
+        "model": model or "sonar-pro",
+        "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
         ],
-        timeout=timeout,
+        "max_tokens": 2048,
+    }
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        r = await client.post(
+            "https://api.perplexity.ai/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+        r.raise_for_status()
+        data = r.json()
+    content = (
+        data.get("choices", [{}])[0]
+        .get("message", {})
+        .get("content")
+        or ""
     )
-    return response.choices[0].message.content or ""
+    citations = data.get("citations") or []
+    if isinstance(citations, (list, tuple)) and citations:
+        return _inject_perplexity_citations(content, list(citations))
+    return content
