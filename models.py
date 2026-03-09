@@ -4,7 +4,7 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
-Provider = Literal["anthropic", "openai", "google", "perplexity"]
+Provider = Literal["anthropic", "openai", "google", "perplexity", "grok"]
 
 
 class GenerateTopicsRequest(BaseModel):

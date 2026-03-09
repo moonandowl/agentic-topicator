@@ -8,7 +8,7 @@ from llm import completions
 from models import AgentResult, Brief, Suggestion
 from parsers import parse_suggestions
 
-Provider = Literal["anthropic", "openai", "google", "perplexity"]
+Provider = Literal["anthropic", "openai", "google", "perplexity", "grok"]
 
 
 def _api_keys(settings, provider: Provider) -> dict[str, str]:
@@ -17,6 +17,7 @@ def _api_keys(settings, provider: Provider) -> dict[str, str]:
         "openai": settings.openai_api_key,
         "google": settings.google_api_key,
         "perplexity": settings.perplexity_api_key,
+        "grok": settings.xai_api_key,
     }
 
 
@@ -28,6 +29,7 @@ def _model_overrides(settings) -> dict:
         "openai": getattr(settings, "openai_model", None),
         "google": getattr(settings, "google_model", None),
         "perplexity": getattr(settings, "perplexity_model", None),
+        "grok": getattr(settings, "grok_model", None),
     }
 
 

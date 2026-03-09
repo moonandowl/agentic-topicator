@@ -1,8 +1,8 @@
-"""LLM provider abstraction for Anthropic, OpenAI, Google, and Perplexity."""
+"""LLM provider abstraction for Anthropic, OpenAI, Google, Perplexity, and Grok."""
 
 from typing import Literal
 
-Provider = Literal["anthropic", "openai", "google", "perplexity"]
+Provider = Literal["anthropic", "openai", "google", "perplexity", "grok"]
 
 
 async def completions(
@@ -38,6 +38,14 @@ async def completions(
             api_keys,
             timeout,
             overrides.get("perplexity"),
+        )
+    if provider == "grok":
+        return await _grok(
+            system_prompt,
+            user_message,
+            api_keys,
+            timeout,
+            overrides.get("grok"),
         )
     raise ValueError(f"Unknown provider: {provider}")
 
@@ -162,3 +170,27 @@ async def _perplexity(
     if isinstance(citations, (list, tuple)) and citations:
         return _inject_perplexity_citations(content, list(citations))
     return content
+
+
+async def _grok(
+    system_prompt: str,
+    user_message: str,
+    api_keys: dict[str, str],
+    timeout: float,
+    model: str | None = None,
+) -> str:
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(
+        api_key=api_keys.get("grok", ""),
+        base_url="https://api.x.ai/v1",
+    )
+    response = await client.chat.completions.create(
+        model=model or "grok-4-fast-reasoning",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ],
+        timeout=timeout,
+    )
+    return response.choices[0].message.content or ""

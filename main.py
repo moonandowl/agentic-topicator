@@ -59,6 +59,7 @@ def setup_app():
             "openai": settings.openai_api_key,
             "google": settings.google_api_key,
             "perplexity": settings.perplexity_api_key,
+            "grok": settings.xai_api_key,
         }
         key = api_keys.get(body.model_provider, "")
         if not key:
@@ -80,6 +81,7 @@ def setup_app():
             "openai": settings.openai_api_key,
             "google": settings.google_api_key,
             "perplexity": settings.perplexity_api_key,
+            "grok": settings.xai_api_key,
         }
         if not api_keys.get(key_name, ""):
             raise HTTPException(

@@ -30,6 +30,7 @@ uvicorn main:app --reload
 - **OpenAI:** gpt-4o (override with `OPENAI_MODEL` for gpt-5.4-pro, etc.)
 - **Google:** gemini-2.0-flash (override with `GOOGLE_MODEL` for gemini-3.1-pro-preview, etc.)
 - **Perplexity:** sonar-pro
+- **Grok (xAI):** grok-4-fast-reasoning (override with `GROK_MODEL`)
 
 Select per run from the UI. Override via env vars if needed.
 
@@ -54,14 +55,16 @@ Select per run from the UI. Override via env vars if needed.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | One of four | For claude-opus-4-6 |
-| `OPENAI_API_KEY` | One of four | For gpt-5.4-pro |
-| `GOOGLE_API_KEY` | One of four | For gemini-3.1-pro-preview |
-| `PERPLEXITY_API_KEY` | One of four | For sonar-pro |
+| `ANTHROPIC_API_KEY` | One of five | For claude-opus-4-6 |
+| `OPENAI_API_KEY` | One of five | For gpt-4o |
+| `GOOGLE_API_KEY` | One of five | For gemini-2.0-flash |
+| `PERPLEXITY_API_KEY` | One of five | For sonar-pro |
+| `XAI_API_KEY` | One of five | For Grok (grok-4-fast-reasoning) |
 | `OPENAI_MODEL` | Optional | Default: `gpt-4o` |
 | `GOOGLE_MODEL` | Optional | Default: `gemini-2.0-flash` |
 | `ANTHROPIC_MODEL` | Optional | Default: `claude-opus-4-6` |
 | `PERPLEXITY_MODEL` | Optional | Default: `sonar-pro` |
+| `GROK_MODEL` | Optional | Default: `grok-4-fast-reasoning` |
 | `AUTH_USERNAME` | Optional | When set with `AUTH_PASSWORD`, enables HTTP Basic Auth |
 | `AUTH_PASSWORD` | Optional | When set with `AUTH_USERNAME`, enables HTTP Basic Auth |
 
