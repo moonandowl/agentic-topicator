@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Agentic Topicator</h1>
+<p>Input a topic and audience. 26 sub-agents run in parallel, each returning article-worthy angles.</p>
+
+<form id="inputForm">
+  <label for="topic">Topic</label>
+  <input type="text" id="topic" name="topic" placeholder="e.g., dental implants, Invisalign for adults" required style="width: 100%;">
+
+  <label for="audience">Audience</label>
+  <input type="text" id="audience" name="audience" placeholder="e.g., women 35-55 considering cosmetic dentistry" required style="width: 100%;">
+
+  <label for="model">Model</label>
+  <select id="model" name="model">
+    <option value="anthropic">Anthropic (claude-opus-4-6)</option>
+    <option value="openai">OpenAI (gpt-5.4-pro)</option>
+    <option value="google">Google (gemini-3.1-pro-preview)</option>
+    <option value="perplexity">Perplexity (sonar-pro)</option>
+  </select>
+
+  <button type="submit" id="generateBtn">Generate Topics</button>
+</form>
+
+<div id="loading" style="display: none;">Running 26 agents in parallel...</div>
+<div id="error" class="error" style="display: none;"></div>
+
+<script>
+  document.getElementById('inputForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const topic = document.getElementById('topic').value;
+    const audience = document.getElementById('audience').value;
+    const model = document.getElementById('model').value;
+    const btn = document.getElementById('generateBtn');
+    const loading = document.getElementById('loading');
+    const err = document.getElementById('error');
+
+    btn.disabled = true;
+    loading.style.display = 'block';
+    err.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/generate-topics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          topic,
+          audience,
+          model_provider: model
+        })
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.detail || res.statusText);
+      }
+      const results = await res.json();
+      sessionStorage.setItem('topicResults', JSON.stringify(results));
+      sessionStorage.setItem('topicInput', JSON.stringify({ topic, audience, model }));
+      window.location.href = '/results';
+    } catch (e) {
+      err.textContent = e.message;
+      err.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      loading.style.display = 'none';
+    }
+  });
+</script>
+{% endblock %}

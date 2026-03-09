@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Article Briefs</h1>
+
+<div id="noData" style="display: none;">
+  <p>No briefs. <a href="/">Start over</a>.</p>
+</div>
+
+<div id="main" style="display: none;">
+  <div style="margin: 1rem 0;">
+    <button id="downloadAll">Download All (.zip)</button>
+    <a href="/results">Back to selections</a>
+    <a href="/">Start over</a>
+  </div>
+
+  <div id="briefList"></div>
+</div>
+
+<script>
+  const briefs = JSON.parse(sessionStorage.getItem('briefs') || '[]');
+  const input = JSON.parse(sessionStorage.getItem('briefInput') || '{}');
+
+  if (!briefs.length) {
+    document.getElementById('noData').style.display = 'block';
+  } else {
+    document.getElementById('main').style.display = 'block';
+
+    const briefList = document.getElementById('briefList');
+    briefs.forEach((b, i) => {
+      const sel = b.selection || {};
+      const div = document.createElement('div');
+      div.className = 'card';
+      const expanded = false;
+      div.innerHTML = `
+        <details ${i === 0 ? 'open' : ''}>
+          <summary><strong>${sel.topic || 'Brief ' + (i+1)}</strong> — ${sel.sub_agent_name || ''}</summary>
+          <div style="margin-top: 1rem; white-space: pre-wrap; font-family: monospace; font-size: 0.9rem;">${b.error || b.content || '(empty)'}</div>
+          ${!b.error ? `<button class="downloadOne" data-idx="${i}">Download this brief</button>` : ''}
+        </details>
+      `;
+      briefList.appendChild(div);
+    });
+
+    document.getElementById('downloadAll').addEventListener('click', async () => {
+      const res = await fetch('/api/export-briefs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ briefs })
+      });
+      if (!res.ok) {
+        alert((await res.json()).detail || 'Export failed');
+        return;
+      }
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'briefs.zip';
+      a.click();
+    });
+
+    document.querySelectorAll('.downloadOne').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        const b = briefs[idx];
+        const content = b.content || '';
+        const sel = b.selection || {};
+        const slug = (s) => s.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
+        const filename = `${slug(sel.topic || 'brief')}-${slug(sel.sub_agent_name || 'agent')}-Brief.md`;
+        const res = await fetch('/api/export-single', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ content, filename })
+        });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+      });
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Topic Suggestions</h1>
+
+<div id="noData" style="display: none;">
+  <p>No results. <a href="/">Start over</a>.</p>
+</div>
+
+<div id="main" style="display: none;">
+  <p>Topic: <strong id="topicDisplay"></strong> | Audience: <strong id="audienceDisplay"></strong></p>
+
+  <div style="margin: 1rem 0;">
+    <label>Filter by agent</label>
+    <select id="agentFilter">
+      <option value="">All agents</option>
+    </select>
+  </div>
+
+  <div style="display: flex; gap: 1rem; align-items: center;">
+    <span id="selectionCount">0 selected</span>
+    <button id="generateBriefsBtn">Generate Briefs</button>
+    <a href="/">Start over</a>
+  </div>
+
+  <div id="suggestions"></div>
+</div>
+
+<script>
+  const raw = sessionStorage.getItem('topicResults');
+  const input = JSON.parse(sessionStorage.getItem('topicInput') || '{}');
+  if (!raw || !input.topic) {
+    document.getElementById('noData').style.display = 'block';
+  } else {
+    const results = JSON.parse(raw);
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('topicDisplay').textContent = input.topic;
+    document.getElementById('audienceDisplay').textContent = input.audience;
+
+    const agentFilter = document.getElementById('agentFilter');
+    const suggestionsDiv = document.getElementById('suggestions');
+
+    const allSuggestions = [];
+    results.forEach(r => {
+      if (r.suggestions && r.suggestions.length) {
+        r.suggestions.forEach(s => {
+          allSuggestions.push({ ...s, agentName: r.agent_name, error: r.error });
+        });
+      }
+      const opt = document.createElement('option');
+      opt.value = r.agent_name;
+      opt.textContent = r.agent_name + (r.error ? ' (failed)' : '');
+      agentFilter.appendChild(opt);
+    });
+
+    const selected = new Set();
+    function render() {
+      const filter = agentFilter.value;
+      const filtered = allSuggestions
+        .map((s, idx) => ({ s, idx }))
+        .filter(({ s }) => !filter || s.agentName === filter);
+      document.getElementById('selectionCount').textContent = selected.size + ' selected';
+      suggestionsDiv.innerHTML = '';
+      filtered.forEach(({ s, idx }) => {
+        const checked = selected.has(idx);
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <label style="display: flex; align-items: flex-start; gap: 0.5rem;">
+            <input type="checkbox" ${checked ? 'checked' : ''} data-idx="${idx}">
+            <div>
+              <strong>${s.agentName}</strong>: ${s.topic}
+              <p style="margin: 0.25rem 0 0; color: #6b7280; font-size: 0.9rem;">${s.justification}</p>
+            </div>
+          </label>
+        `;
+        div.querySelector('input').addEventListener('change', (e) => {
+          if (e.target.checked) selected.add(idx);
+          else selected.delete(idx);
+          render();
+        });
+        suggestionsDiv.appendChild(div);
+      });
+    }
+    render();
+    agentFilter.addEventListener('change', render);
+
+    document.getElementById('generateBriefsBtn').addEventListener('click', async () => {
+      if (selected.size === 0) {
+        alert('Select at least one suggestion.');
+        return;
+      }
+      const selections = Array.from(selected).map(idx => {
+        const s = allSuggestions[idx];
+        return { sub_agent_name: s.agentName, topic: s.topic, justification: s.justification };
+      });
+      sessionStorage.setItem('briefSelections', JSON.stringify(selections));
+      sessionStorage.setItem('briefInput', JSON.stringify(input));
+
+      const btn = document.getElementById('generateBriefsBtn');
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      try {
+        const res = await fetch('/api/generate-briefs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            selections,
+            original_topic: input.topic,
+            original_audience: input.audience,
+            model_provider: input.model
+          })
+        });
+        if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+        const briefs = await res.json();
+        sessionStorage.setItem('briefs', JSON.stringify(briefs));
+        window.location.href = '/briefs';
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Briefs';
+      }
+    });
+  }
+</script>
+{% endblock %}

@@ -26,28 +26,42 @@ uvicorn main:app --reload
 
 ## Supported Models
 
-- Claude Opus 4.6 MAX (Anthropic)
-- GPT-4.1 (OpenAI)
-- Gemini 2.5 Pro (Google)
-- Sonar Pro (Perplexity)
+- **Anthropic:** claude-opus-4-6
+- **OpenAI:** gpt-5.4-pro
+- **Google:** gemini-3.1-pro-preview
+- **Perplexity:** sonar-pro
 
-Select per run from the UI.
+Select per run from the UI. Override via env vars (e.g. `OPENAI_MODEL`) if needed.
 
-## Deploy (Render)
+## Deploy
 
-1. Fork or clone this repo, then connect it to [Render](https://render.com).
-2. Create a new Web Service from the repository.
-3. Render will auto-detect `render.yaml`; no extra config needed.
-4. Add environment variables in the Render dashboard (see below).
+### Railway
+
+1. Go to [Railway](https://railway.app) and sign in with GitHub.
+2. Click **New Project** → **Deploy from GitHub repo**.
+3. Select `moonandowl/agentic-topicator` (or your fork).
+4. Railway auto-detects `railway.json`; no extra config needed.
+5. In the service **Variables** tab, add your API keys and optional auth (see below).
+6. In **Settings** → **Networking**, click **Generate Domain** for a public URL.
+
+### Render
+
+1. Connect the repo at [Render](https://render.com).
+2. Create a new Web Service; Render auto-detects `render.yaml`.
+3. Add environment variables in the dashboard (see below).
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | One of four | For Claude Opus 4.6 MAX |
-| `OPENAI_API_KEY` | One of four | For GPT-4.1 |
-| `GOOGLE_API_KEY` | One of four | For Gemini 2.5 Pro |
-| `PERPLEXITY_API_KEY` | One of four | For Sonar Pro |
+| `ANTHROPIC_API_KEY` | One of four | For claude-opus-4-6 |
+| `OPENAI_API_KEY` | One of four | For gpt-5.4-pro |
+| `GOOGLE_API_KEY` | One of four | For gemini-3.1-pro-preview |
+| `PERPLEXITY_API_KEY` | One of four | For sonar-pro |
+| `OPENAI_MODEL` | Optional | Default: `gpt-5.4-pro` |
+| `GOOGLE_MODEL` | Optional | Default: `gemini-3.1-pro-preview` |
+| `ANTHROPIC_MODEL` | Optional | Default: `claude-opus-4-6` |
+| `PERPLEXITY_MODEL` | Optional | Default: `sonar-pro` |
 | `AUTH_USERNAME` | Optional | When set with `AUTH_PASSWORD`, enables HTTP Basic Auth |
 | `AUTH_PASSWORD` | Optional | When set with `AUTH_USERNAME`, enables HTTP Basic Auth |
 
