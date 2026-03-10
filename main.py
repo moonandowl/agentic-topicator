@@ -107,16 +107,25 @@ def setup_app():
         def slug(s: str) -> str:
             return re.sub(r"[^a-zA-Z0-9]+", "-", s).strip("-")[:50]
 
+        def extract_seo_title(content: str) -> str:
+            """Extract the second H1 (SEO title) from brief content. Fallback to first H1 or 'brief'."""
+            lines = content.strip().split("\n")
+            h1s = [ln.strip()[2:].strip() for ln in lines if ln.strip().startswith("# ")]
+            if len(h1s) >= 2:
+                return h1s[1]
+            if len(h1s) >= 1:
+                return h1s[0]
+            return "brief"
+
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             for i, b in enumerate(briefs_data):
-                sel = b.get("selection", {})
-                topic_slug = slug(sel.get("topic", "brief"))
-                agent_slug = slug(sel.get("sub_agent_name", "agent"))
                 content = b.get("content", "")
-                filename = f"{topic_slug}-{agent_slug}-Brief.md"
+                seo_title = extract_seo_title(content)
+                seo_slug = slug(seo_title)
+                filename = f"{seo_slug}-Brief.md"
                 if filename in [info.filename for info in zf.infolist()]:
-                    filename = f"{topic_slug}-{agent_slug}-{i}-Brief.md"
+                    filename = f"{seo_slug}-{i}-Brief.md"
                 zf.writestr(filename, content)
 
         buffer.seek(0)

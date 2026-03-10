@@ -59,14 +59,20 @@
       a.click();
     });
 
+    const getSeoTitle = (content) => {
+      const lines = (content || '').trim().split('\n');
+      const h1s = lines.filter(l => l.trim().startsWith('# ')).map(l => l.trim().slice(2).trim());
+      return h1s.length >= 2 ? h1s[1] : (h1s[0] || 'brief');
+    };
+    const slug = (s) => String(s).replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
+
     document.querySelectorAll('.downloadOne').forEach(btn => {
       btn.addEventListener('click', async () => {
         const idx = parseInt(btn.dataset.idx, 10);
         const b = briefs[idx];
         const content = b.content || '';
-        const sel = b.selection || {};
-        const slug = (s) => s.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
-        const filename = `${slug(sel.topic || 'brief')}-${slug(sel.sub_agent_name || 'agent')}-Brief.md`;
+        const seoTitle = getSeoTitle(content);
+        const filename = `${slug(seoTitle)}-Brief.md`;
         const res = await fetch('/api/export-single', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
