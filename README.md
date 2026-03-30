@@ -11,10 +11,12 @@ A parallel, agent-based system for generating article topic ideas and article br
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with API keys and optional AUTH_USERNAME / AUTH_PASSWORD
+# Edit .env: API keys plus AUTH_USERNAME and AUTH_PASSWORD (both required to lock the app)
 uvicorn main:app --reload
-# Open http://localhost:8000
+# Open http://localhost:8000 — browser will prompt for Basic Auth username/password
 ```
+
+**Password protection:** Set `AUTH_USERNAME` and `AUTH_PASSWORD` together. All routes except `/health` require HTTP Basic Auth. Add the same variables in Railway or Render (see Deploy) so production is protected.
 
 ## Process
 
