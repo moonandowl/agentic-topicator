@@ -3,10 +3,6 @@
 import os
 from functools import lru_cache
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 
 @lru_cache
 def get_settings():
@@ -20,7 +16,6 @@ class Settings:
         self.google_api_key = os.getenv("GOOGLE_API_KEY", "")
         self.perplexity_api_key = os.getenv("PERPLEXITY_API_KEY", "")
         self.xai_api_key = os.getenv("XAI_API_KEY", "")
-        self.auth_username = os.getenv("AUTH_USERNAME", "")
         self.auth_password = os.getenv("AUTH_PASSWORD", "")
         # Model IDs (override via env if needed)
         self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o")
@@ -31,4 +26,4 @@ class Settings:
 
     @property
     def auth_enabled(self) -> bool:
-        return bool(self.auth_username and self.auth_password)
+        return bool(self.auth_password)

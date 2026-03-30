@@ -16,12 +16,11 @@ from services import generate_briefs, generate_topics
 app = None  # Set after we have templates
 
 
-def verify_auth(username: str, password: str, settings) -> bool:
+def verify_auth(_username: str, password: str, settings) -> bool:
+    """HTTP Basic Auth: only the password is checked; username may be anything."""
     import secrets
 
     return secrets.compare_digest(
-        username.encode("utf-8"), settings.auth_username.encode("utf-8")
-    ) and secrets.compare_digest(
         password.encode("utf-8"), settings.auth_password.encode("utf-8")
     )
 

@@ -10,13 +10,16 @@ A parallel, agent-based system for generating article topic ideas and article br
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env
-# Edit .env: API keys plus AUTH_USERNAME and AUTH_PASSWORD (both required to lock the app)
+# Set environment variables (see table below): in Railway/Render Variables, or locally e.g.
+#   export ANTHROPIC_API_KEY=...
+#   export AUTH_PASSWORD=...   # optional; locks the app
 uvicorn main:app --reload
-# Open http://localhost:8000 — browser will prompt for Basic Auth username/password
+# Open http://localhost:8000 — if AUTH_PASSWORD is set, browser prompts for Basic Auth (any username; only password is checked)
 ```
 
-**Password protection:** Set `AUTH_USERNAME` and `AUTH_PASSWORD` together. All routes except `/health` require HTTP Basic Auth. Add the same variables in Railway or Render (see Deploy) so production is protected.
+**Configuration:** The app reads **process environment variables only** (it does not load a `.env` file). Use your host’s **Environment Variables** / **Variables** UI for production. [`.env.example`](./.env.example) lists the names to set.
+
+**Password protection:** Set `AUTH_PASSWORD` as an environment variable. All routes except `/health` require HTTP Basic Auth; only the password must match (username is ignored—use anything, e.g. `x`).
 
 ## Process
 
@@ -53,7 +56,9 @@ Select per run from the UI. Override via env vars if needed.
 2. Create a new Web Service; Render auto-detects `render.yaml`.
 3. Add environment variables in the dashboard (see below).
 
-## Environment Variables
+## Environment variables
+
+Set these in your deployment platform’s variable UI or export them locally before running `uvicorn`.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -67,8 +72,7 @@ Select per run from the UI. Override via env vars if needed.
 | `ANTHROPIC_MODEL` | Optional | Default: `claude-opus-4-6` |
 | `PERPLEXITY_MODEL` | Optional | Default: `sonar-pro` |
 | `GROK_MODEL` | Optional | Default: `grok-4-fast-reasoning` |
-| `AUTH_USERNAME` | Optional | When set with `AUTH_PASSWORD`, enables HTTP Basic Auth |
-| `AUTH_PASSWORD` | Optional | When set with `AUTH_USERNAME`, enables HTTP Basic Auth |
+| `AUTH_PASSWORD` | Optional | When set, enables HTTP Basic Auth (username ignored; only password is verified) |
 
 ## Docs
 

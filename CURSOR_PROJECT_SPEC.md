@@ -36,7 +36,7 @@ Use this document to build the Agentic Topicator from scratch in a new Cursor pr
 | Google   | gemini-2.5-pro   | GOOGLE_API_KEY     |
 | Perplexity | sonar-pro     | PERPLEXITY_API_KEY |
 
-- **Auth env vars:** `AUTH_USERNAME`, `AUTH_PASSWORD` — when set, require HTTP Basic Auth on all routes except `/health` for deployment healthchecks.
+- **Auth env var:** `AUTH_PASSWORD` — when set, require HTTP Basic Auth on all routes except `/health` for deployment healthchecks (only password is verified; username ignored).
 
 ---
 
@@ -133,15 +133,17 @@ Use pattern: `{TopicSlug}-{AgentName}-Brief.md` (e.g., `LASIK-Emotional-Agent-Br
 
 ## Environment Variables
 
+Configure via the host dashboard or shell exports; the app reads `os.environ` only (no `.env` file loading).
+
 ```env
 # Required for chosen provider
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
 GOOGLE_API_KEY=
 PERPLEXITY_API_KEY=
+XAI_API_KEY=
 
 # Optional auth (when set, enables HTTP Basic Auth)
-AUTH_USERNAME=
 AUTH_PASSWORD=
 ```
 
@@ -158,7 +160,6 @@ google-genai>=1.0.0
 httpx>=0.28.0
 python-multipart>=0.0.18
 jinja2>=3.1.4
-python-dotenv>=1.0.1
 pydantic>=2.10.0
 ```
 
